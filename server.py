@@ -19,7 +19,7 @@ def save_msg(user_id, role, content):
     conn.commit()
     conn.close()
 
-def get_history(user_id, limit=10):
+def get_history(user_id, limit=6):
     conn = sqlite3.connect(DB_FILE)
     cur = conn.cursor()
     cur.execute("SELECT role, content FROM messages WHERE user_id = ? ORDER BY id DESC LIMIT ?", (user_id, limit))
@@ -31,14 +31,14 @@ def get_history(user_id, limit=10):
 def ask_ai(query: str, user_id: str = "papa"):
     print(f"\n[Вопрос]: {query}")
     
-    # 1. Поиск в интернете
+    # 1. Поиск в интернете через DuckDuckGo
     search_context = ""
     try:
         with DDGS() as ddgs:
             results = list(ddgs.text(query, max_results=2))
             if results:
                 search_context = "\n".join([f"{r['title']}: {r['body']}" for r in results])
-    except Exception as e:
+    except Exception:
         pass
     
     user_content = query
@@ -47,16 +47,17 @@ def ask_ai(query: str, user_id: str = "papa"):
         
     save_msg(user_id, "user", user_content)
     
-    # 2. Обращение к нейросети (используем актуальную модель openai)
+    # 2. Обращение к бесплатной нейросети (без платных моделей)
     history = get_history(user_id)
     sys_prompt = {"role": "system", "content": "Ты умный и вежливый помощник. Отвечай на русском языке. Используй справку из интернета, если она есть."}
     
     messages = [sys_prompt] + history
     
     try:
+        # Убрали "model": "openai" — теперь запрос 100% бесплатный
         response = requests.post(
             "https://text.pollinations.ai/",
-            json={"messages": messages, "model": "openai"},
+            json={"messages": messages},
             timeout=30
         )
         bot_reply = response.text.strip()

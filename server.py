@@ -47,17 +47,16 @@ def ask_ai(query: str, user_id: str = "papa"):
         
     save_msg(user_id, "user", user_content)
     
-    # 2. Обращение к бесплатной нейросети (БЕЗ РЕГИСТРАЦИИ И КЛЮЧЕЙ!)
+    # 2. Обращение к нейросети (используем актуальную модель openai)
     history = get_history(user_id)
     sys_prompt = {"role": "system", "content": "Ты умный и вежливый помощник. Отвечай на русском языке. Используй справку из интернета, если она есть."}
     
     messages = [sys_prompt] + history
     
     try:
-        # Запрос к Pollinations
         response = requests.post(
             "https://text.pollinations.ai/",
-            json={"messages": messages, "model": "qwen"},
+            json={"messages": messages, "model": "openai"},
             timeout=30
         )
         bot_reply = response.text.strip()
